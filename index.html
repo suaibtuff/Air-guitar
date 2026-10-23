@@ -10,7 +10,7 @@ main{max-width:980px;margin:0 auto;padding:10px;display:grid;gap:10px}
 h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin:0 0 8px}
 #wrap{position:relative;margin:0 auto;width:min(100%,calc(58vh*var(--ar,1.7778)));aspect-ratio:var(--ar,16/9);background:#000;border-radius:10px;overflow:hidden}
 #wrap video,#wrap canvas{position:absolute;inset:0;width:100%;height:100%}
-#msg{position:absolute;left:8px;right:8px;bottom:8px;background:#000b;border-radius:8px;padding:6px 10px;font-size:13px}
+#cv{touch-action:none}#msg{pointer-events:none;position:absolute;left:8px;right:8px;bottom:8px;background:#000b;border-radius:8px;padding:6px 10px;font-size:13px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 button,select,input{font:inherit;color:var(--tx);background:var(--p2);border:1px solid #2f3547;border-radius:10px;min-height:46px;padding:0 14px}
 button{cursor:pointer}button.pri{background:var(--ac);color:#1a1205;border-color:var(--ac);font-weight:700}
@@ -18,18 +18,19 @@ button.on{border-color:var(--ok);color:var(--ok)}input[type=range]{padding:0;min
 .chip{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--p2);color:var(--mu)}.chip.ok{color:var(--ok)}.chip.bad{color:var(--bad)}
 #cname{font-size:46px;font-weight:700;color:var(--ac);line-height:1}
 .top{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pad button{font-weight:600;min-height:50px}.pad button.sel{background:var(--ac);color:#1a1205}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.pad button{font-weight:600;min-height:50px}.pad button.sel{background:var(--ac);color:#1a1205}
 .set{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.set label{display:grid;gap:4px;color:var(--mu);font-size:12px}
 small,li{color:var(--mu)}
 </style></head><body><main>
 <section class="card">
  <div id="wrap"><video id="V" autoplay playsinline muted></video><canvas id="cv"></canvas><div id="msg">Press Start Playing. Camera needs HTTPS or localhost.</div></div>
  <div class="row">
-  <button id="go" class="pri">Start Playing</button><button id="cal">Calibrate fretboard</button>
+  <button id="go" class="pri">Start Playing</button><button id="cal">Easy calibrate</button><button id="lock" class="pri">Lock now</button>
  </div>
+ <div class="row"><button id="grot">Rotate guide</button><button id="swap">Swap thick/thin side</button><button id="cal3">Tap calibrate</button><button id="undo">Undo tap</button></div>
  <div class="row"><button id="back" class="on" style="flex:1">Back camera</button><button id="front" style="flex:1">Front camera</button>
   <select id="cam" style="flex:2" aria-label="Other cameras"><option value="">Other cameras…</option></select></div>
- <div class="row"><span class="chip" id="cs">camera off</span><span class="chip" id="hf">fretting hand: –</span><span class="chip" id="hs">strum hand: –</span><span class="chip" id="au">audio: off</span><span class="chip" id="dg"></span></div>
+ <div class="row"><span class="chip" id="cs">camera off</span><span class="chip" id="hf">fretting hand: –</span><span class="chip" id="hs">strum hand: –</span><span class="chip" id="au">audio: off</span><span class="chip" id="dg"></span><span class="chip" id="lt"></span></div>
 </section>
 
 <section class="card top"><div><div id="cname">—</div><small id="csub">detected chord</small></div>
@@ -43,7 +44,8 @@ small,li{color:var(--mu)}
 </section>
 
 <section class="card"><h2>Settings</h2><div class="set">
- <label>Strum sensitivity<input id="sens" type="range" min="1" max="10" value="5"></label>
+ <label>Strum sensitivity (higher = lighter strums)<input id="sens" type="range" min="1" max="10" value="8"></label>
+ <label>Strokes<select id="sm"><option value="both">Down + up</option><option value="down">Down only</option></select></label>
  <label>Volume<input id="vol" type="range" min="0" max="1" step=".05" value=".8"></label>
  <label>Strum strength<select id="str"><option value=".6">Light</option><option value=".85" selected>Normal</option><option value="1">Strong</option></select></label>
  <label>Sound<select id="style"><option value="normal">Strum</option><option value="gentle">Gentle strum</option><option value="pick">Picked arpeggio</option></select></label>
@@ -51,14 +53,15 @@ small,li{color:var(--mu)}
 </div></section>
 
 <section class="card"><h2>Setup guide</h2><ol>
- <li>Prop the phone (rear camera) so the neck and both hands are visible, steady, in good light.</li>
- <li>Press Calibrate, then tap 4 points in order: <b>nut at the low‑E string</b>, <b>nut at the high‑E string</b>, <b>4th fret at the high‑E string</b>, <b>4th fret at the low‑E string</b>.</li>
- <li>Hold a chord until its name appears, then strum across the strings. The strumming hand is whichever hand is not on the fretboard.</li>
+ <li>Prop the phone so the neck (nut to 4th fret) and BOTH hands are in view. Keep it bright and the phone still. The “light” chip should say ok.</li>
+ <li>Press <b>Easy calibrate</b>. A green guide appears. Move the guitar (or phone) until the <b>nut sits on the guide’s end with the label “thick E”/“thin e” matching your guitar’s thick and thin string sides</b>, and the neck fills the guide up to the 4th fret. Use <b>Rotate guide</b> if your guitar is sideways. Then press <b>Lock now</b>.</li>
+ <li>Wrong side? Press <b>Swap thick/thin side</b>. Want more precision? Use <b>Tap calibrate</b> (3 taps).</li>
+ <li>Play only Em, G, C, D. Hold the chord until its name shows, then strum. A small wrist flick is enough, and sensitivity can go higher for lighter strums.</li>
 </ol></section>
 </main>
 <script>
 const $=id=>document.getElementById(id),V=$('V'),cv=$('cv'),cx=cv.getContext('2d');
-const CH={E:[0,2,2,1,0,0],Em:[0,2,2,0,0,0],Am:[-1,0,2,2,1,0],A:[-1,0,2,2,2,0],C:[-1,3,2,0,1,0],D:[-1,-1,0,2,3,2],Dm:[-1,-1,0,2,3,1],G:[3,2,0,0,0,3],F:[1,3,3,2,1,1]};
+const CH={Em:[0,2,2,0,0,0],G:[3,2,0,0,0,3],C:[-1,3,2,0,1,0],D:[-1,-1,0,2,3,2]};
 const OPEN=[40,45,50,55,59,64];
 
 /* ---------- audio: plucked-string model + acoustic body EQ (not recorded samples) ---------- */
@@ -133,56 +136,69 @@ function observe(h){
   const f=fretOf(u);if(f<1||f>5)return;
   let lo=v*5,hi=v*5;
   if(k===8){const[u5,v5]=map(H,h[5][0],h[5][1]);if(fretOf(u5)===f&&Math.abs(v5-v)*5>1.6){lo=Math.min(v,v5)*5;hi=Math.max(v,v5)*5}}
-  o.push({f,lo,hi});
+  o.push({f,fp:-12*Math.log2(1-u*P4),lo,hi});
  });
  return o;
 }
 function score(obs,name){
  const pr=[];CH[name].forEach((f,s)=>{if(f>0)pr.push({s,f})});
  const used=new Set();let m=0;
- pr.forEach(p=>{const i=obs.findIndex(o=>o.f===p.f&&p.s>=o.lo-.7&&p.s<=o.hi+.7);if(i>=0){m++;used.add(i)}});
+ pr.forEach(p=>{const i=obs.findIndex(o=>Math.abs(o.fp-(p.f-.5))<=.7&&p.s>=o.lo-.8&&p.s<=o.hi+.8);if(i>=0){m++;used.add(i)}});
  return m/(pr.length+obs.length-used.size);
 }
 function classify(obs){
  if(!obs.length)return'none';
  const sc=Object.keys(CH).map(n=>[n,score(obs,n)]).sort((a,b)=>b[1]-a[1]);
- return(sc[0][1]>=.75&&sc[0][1]-sc[1][1]>=.12)?sc[0][0]:'unknown';
+ return(sc[0][1]>=.6&&sc[0][1]-sc[1][1]>=.1)?sc[0][0]:'unknown';
 }
 const votes=[];let stable=null,obsNow=[];
 function vote(c){
- votes.push(c);if(votes.length>7)votes.shift();
+ votes.push(c);if(votes.length>6)votes.shift();
  const t={};votes.forEach(x=>t[x]=(t[x]||0)+1);
  const[w,n]=Object.entries(t).sort((a,b)=>b[1]-a[1])[0];
- stable=n>=5?w:null; // null = still detecting / transitioning
+ stable=n>=4?w:null; // null = still detecting / transitioning
 }
 
-/* ---------- strum detection ---------- */
-let pv=null,pt=0,ema=0,armed=true,lastFire=0,lastSpeed=0;
+/* ---------- strum detection: zig-zag displacement along the strum axis, scaled by hand size ---------- */
+let pv=null,lastSpeed=0,hist=[],lastDir=0,lastFire=-1e9,sm=0,spanE=0;
 function strumStep(h,t){
- let v;if(H)v=map(H,h[9][0],h[9][1])[1];else v=h[9][1]/vh*8;
- if(pv===null||t-pt>200){pv=v;pt=t;ema=0;armed=true;return}
- const dt=(t-pt)/1000;let vel=(v-pv)/dt;pv=v;pt=t;
- ema=ema*.5+vel*.5;
- const thr=11-(+$('sens').value)*.9; // strings (or screen units) per second
- if(armed&&Math.abs(ema)>thr&&t-lastFire>120){
-  armed=false;lastFire=t;lastSpeed=Math.abs(ema);
-  const d=(ema>0?1:-1)*(+$('flip').value);
-  doStrum(d,Math.min(1,.45+.55*Math.min(1,(Math.abs(ema)/thr-1)/2)));
- }else if(Math.abs(ema)<thr*.5)armed=true;
+ if(pv===null){hist=[];pv=0;spanE=0}
+ let ax=0,ay=1;
+ if(cal.length===4){const dx=(cal[1][0]-cal[0][0])*vw,dy=(cal[1][1]-cal[0][1])*vh,l=Math.hypot(dx,dy);if(l>1){ax=dx/l;ay=dy/l}}
+ let sx=0,sy=0;[8,12,16,20].forEach(k=>{sx+=h[k][0];sy+=h[k][1]});
+ const raw=(sx/4)*ax+(sy/4)*ay;
+ const span=Math.max(20,Math.hypot(h[5][0]-h[17][0],h[5][1]-h[17][1]));
+ spanE=spanE?spanE*.9+span*.1:span;
+ sm=hist.length&&t-hist[hist.length-1].t<200?sm*.4+raw*.6:raw;
+ hist.push({t,v:sm});while(hist.length&&t-hist[0].t>300)hist.shift();
+ if(hist.length<2)return;
+ let lo=hist[0],hi=hist[0];for(const q of hist){if(q.v<lo.v)lo=q;if(q.v>hi.v)hi=q}
+ const D=Math.max(.08,.95-.09*(+$('sens').value))*spanE;
+ const up=sm-lo.v,dn=hi.v-sm;let dir=0,from=null;
+ if(up>D&&up>=dn){dir=1;from=lo}else if(dn>D){dir=-1;from=hi}
+ if(!dir||t-lastFire<90)return;
+ if(dir===lastDir&&t-lastFire<600)return;
+ const speed=Math.abs(sm-from.v)/spanE/Math.max(.03,(t-from.t)/1000);
+ lastFire=t;lastDir=dir;lastSpeed=speed;hist=[{t,v:sm}];
+ doStrum(dir*(+$('flip').value),.45+.55*Math.min(1,Math.max(0,(speed-.8)/4)));
 }
 let target='Em';
+let lastGood=null,lastGoodT=0;
 function doStrum(d,vel){
  const m=$('mode').value;if(m==='practice')return;
- const c=m==='manual'?target:stable;
- if(!CH[c])return;strum(c,d,vel*(+$('str').value));
+ if($('sm').value==='down'&&d<0)return;
+ let c=m==='manual'?target:stable;
+ if(m==='air'){if(CH[stable]){lastGood=stable;lastGoodT=performance.now()}else if(stable===null&&CH[lastGood]&&performance.now()-lastGoodT<1200)c=lastGood}
+ if(!CH[c]){$('dg').textContent='strum ignored: chord not clear';return}strum(c,d,vel*(+$('str').value));
  $('dg').textContent='strum '+(d>0?'↓':'↑')+' '+lastSpeed.toFixed(1);
 }
 $('dn').onclick=()=>{A();if($('mode').value==='practice')return;if(CH[target])strum(target,1,+$('str').value)};
 $('up').onclick=()=>{A();if($('mode').value==='practice')return;if(CH[target])strum(target,-1,+$('str').value)};
 const pad=$('pad');Object.keys(CH).forEach(n=>{const b=document.createElement('button');b.textContent=n;
- b.onclick=()=>{target=n;[...pad.children].forEach(x=>x.classList.toggle('sel',x===b));A()};pad.appendChild(b);if(n==='Em')b.classList.add('sel')});
+ b.onclick=()=>{target=n;[...pad.children].forEach(x=>x.classList.toggle('sel',x===b));A();if($('mode').value!=='practice')strum(n,1,.7)};pad.appendChild(b);if(n==='Em')b.classList.add('sel')});
 
 /* ---------- camera + tracking ---------- */
+let wl=null;const bc=document.createElement('canvas');bc.width=bc.height=16;const bx=bc.getContext('2d',{willReadFrequently:true});
 let stream,hl,running=false,lastT=-1,fcount=0,fps0=performance.now(),facing='environment',mirror=false;
 const say=t=>$('msg').textContent=t;
 function camErr(e){const n=e&&e.name;
@@ -196,7 +212,7 @@ async function listCams(){
 }
 async function openCam(){
  if(stream)stream.getTracks().forEach(t=>t.stop());
- const id=$('cam').value,base={width:{ideal:1280},height:{ideal:720}};
+ const id=$('cam').value,base={width:{ideal:640},height:{ideal:480}};
  const tries=id?[{deviceId:{exact:id}}]:[{facingMode:{exact:facing}},{facingMode:{ideal:facing}},{}];
  let err=null;
  for(const c of tries){try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...base,...c}});err=null;break}catch(e){err=e;if(e.name==='NotAllowedError'||e.name==='SecurityError'||e.name==='NotReadableError')break}}
@@ -218,44 +234,102 @@ async function startCam(){
  if(!window.isSecureContext||!navigator.mediaDevices){
   say('Camera is blocked: this page is not on HTTPS or localhost (it was opened as '+location.protocol+'//). Use the HTTPS or localhost steps. The Manual ↓/↑ buttons still work.');
   $('cs').textContent='camera blocked';$('cs').className='chip bad';return false}
- try{await openCam();say(hl?(H?'Camera on.':'Camera on. Press Calibrate fretboard.'):'Camera on. Press Start Playing to load hand tracking.');return true}
+ try{await openCam();say(hl?(H?'Camera on.':'Camera on. Press Calibrate.'):'Camera on. Press Start Playing to load hand tracking.');return true}
  catch(e){say(camErr(e));$('cs').textContent='camera error';$('cs').className='chip bad';return false}
 }
 async function loadModel(){
  say('Loading hand-tracking model (needs internet the first time)…');
  const V0='0.10.14',mp=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V0+'/vision_bundle.mjs');
  const fs=await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V0+'/wasm');
- const mk=d=>mp.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:d},runningMode:'VIDEO',numHands:2});
+ const mk=d=>mp.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:d},runningMode:'VIDEO',numHands:2,minHandDetectionConfidence:.4,minHandPresenceConfidence:.4,minTrackingConfidence:.4});
  try{hl=await mk('GPU')}catch(e){hl=await mk('CPU')}
 }
 $('go').onclick=async()=>{
- if(running){running=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;V.srcObject=null;cx.clearRect(0,0,cv.width,cv.height);
+ if(running){running=false;try{if(wl)wl.release()}catch(e){}wl=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;V.srcObject=null;cx.clearRect(0,0,cv.width,cv.height);
   $('go').textContent='Start Playing';$('cs').textContent='camera off';$('cs').className='chip';say('Stopped.');return}
  A();
  if(!stream&&!(await startCam()))return;
  if(!hl){try{await loadModel()}catch(e){say('Hand tracking failed to load ('+(e&&e.message||e)+'). The video is still live. Check your internet connection and press Start Playing again. The Manual ↓/↑ buttons work meanwhile.');return}}
- running=true;$('go').textContent='Stop Playing';say(H?'Playing. Hold a chord, then strum.':'Tracking on. Press Calibrate fretboard so chords can be detected.');
+ running=true;try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(l=>wl=l).catch(()=>{})}catch(e){}$('go').textContent='Stop Playing';say(H?'Playing. Hold a chord, then strum.':'Tracking on. Press Calibrate so chords can be detected.');
 };
 $('back').onclick=()=>{A();facing='environment';$('cam').value='';startCam()};
 $('front').onclick=()=>{A();facing='user';$('cam').value='';startCam()};
 $('cam').onchange=()=>{if($('cam').value){A();startCam()}};
-$('cal').onclick=()=>{if(!stream){say('Start the camera first (Back/Front camera or Start Playing).');return}calMode=true;cal=[];H=Hi=null;say('Tap 1/4: the nut at the LOW‑E string.')};
-cv.addEventListener('pointerdown',e=>{
- if(!calMode)return;const r=cv.getBoundingClientRect();
- {const x=(e.clientX-r.left)/r.width;cal.push([mirror?1-x:x,(e.clientY-r.top)/r.height])}
- const L=['Tap 2/4: the nut at the HIGH‑E string.','Tap 3/4: the 4th fret at the HIGH‑E string.','Tap 4/4: the 4th fret at the LOW‑E string.'];
- if(cal.length<4)say(L[cal.length-1]);
- else{calMode=false;rebuild();if(H){try{localStorage.setItem('agcal_'+facing,JSON.stringify(cal))}catch(e){}say('Calibrated. Check that the drawn grid sits on your strings; recalibrate if not.')}else{cal=[];say('Those points didn’t form a valid shape. Try again.')}}
-});
+let calKind=3,pts=[],guiding=false,guideRot=0,guideFlip=false,guideCal=[],guideHi=null;
+const saveCal=()=>{try{localStorage.setItem('agcal_'+facing,JSON.stringify(cal))}catch(e){}};
+const M3=['Tap 1/3: the CENTRE of the neck at the NUT (where the headstock starts).','Tap 2/3: the CENTRE of the neck at the 4th fret.','Tap 3/3: the EDGE of the neck on the THICK-string side, anywhere along the neck.'];
+const M4=['Tap 1/4: the nut at the thick (low‑E) side.','Tap 2/4: the nut at the thin (high‑E) side.','Tap 3/4: the 4th fret at the thin side.','Tap 4/4: the 4th fret at the thick side.'];
+function quad3(n,f,e){
+ const dx=f[0]-n[0],dy=f[1]-n[1],L=Math.hypot(dx,dy);if(L<60)return null;
+ const px=-dy/L,py=dx/L,sd=(e[0]-n[0])*px+(e[1]-n[1])*py,w=Math.abs(sd),sg=sd>=0?1:-1;
+ if(w<L*.1||w>L*.9)return null;
+ const c=(p,k)=>[p[0]+k*sg*w*px,p[1]+k*sg*w*py];
+ return[c(n,1),c(n,-1),c(f,-1),c(f,1)];
+}
+function startCal(k){
+ if(!stream){say('Start the camera first (Back/Front camera or Start Playing).');return}
+ guiding=false;calKind=k;calMode=true;pts=[];cal=[];H=Hi=null;say(k===3?M3[0]:M4[0]);
+}
+function finishCal(){
+ calMode=false;
+ if(calKind===3){
+  const q=quad3([pts[0][0]*vw,pts[0][1]*vh],[pts[1][0]*vw,pts[1][1]*vh],[pts[2][0]*vw,pts[2][1]*vh]);
+  cal=q?q.map(p=>[p[0]/vw,p[1]/vh]):[];
+ }else cal=pts.slice();
+ if(cal.length===4)rebuild();
+ if(cal.length===4&&H){saveCal();say('Calibrated. The grid should sit on the fretboard. If not, recalibrate. Mirrored chords? Press Swap thick/thin side.')}
+ else{cal=[];H=Hi=null;say('Those taps didn’t form a sensible neck. Press Calibrate and try again.')}
+}
+function computeGuide(){
+ if(!vw)return;
+ const m=Math.min(vw,vh),Lg=m*.8,Wg=Lg*.3,c0=vw/2,c1=vh/2;
+ let P=[[-Wg/2,-Lg/2],[Wg/2,-Lg/2],[Wg/2,Lg/2],[-Wg/2,Lg/2]];
+ for(let k=0;k<guideRot;k++)P=P.map(([x,y])=>[-y,x]);
+ if(guideFlip)P=[P[1],P[0],P[3],P[2]];
+ const px=P.map(([x,y])=>[c0+x,c1+y]);
+ guideCal=px.map(q=>[q[0]/vw,q[1]/vh]);guideHi=homog([[0,0],[0,1],[1,1],[1,0]],px);
+}
+function startGuide(){
+ if(!stream){say('Start the camera first (Back/Front camera or Start Playing).');return}
+ calMode=false;pts=[];cal=[];H=Hi=null;guiding=true;guideFlip=false;guideRot=vw>vh?3:0;computeGuide();
+ say('Move the guitar so the nut is on the guide’s end, labels matching your thick/thin string sides. Then press Lock now.');
+}
+function lockGuide(){
+ if(!guiding){say('Press Easy calibrate first.');return}
+ computeGuide();cal=guideCal.map(q=>q.slice());guiding=false;rebuild();saveCal();
+ say('Locked. The orange grid should sit on your fretboard. Wrong side? Press Swap. Slightly off? Use Tap calibrate.');
+}
+$('cal').onclick=startGuide;$('lock').onclick=lockGuide;$('cal3').onclick=()=>startCal(3);
+$('grot').onclick=()=>{if(guiding){guideRot=(guideRot+1)%4;computeGuide()}else say('Press Easy calibrate first.')};
+$('undo').onclick=()=>{if(calMode&&pts.length){pts.pop();say('Undone. '+(calKind===3?M3:M4)[pts.length])}};
+$('swap').onclick=()=>{if(guiding){guideFlip=!guideFlip;computeGuide();return}if(cal.length===4){cal=[cal[1],cal[0],cal[3],cal[2]];rebuild();saveCal();say('Swapped thick/thin sides.')}else say('Calibrate first.')};
+let lastTapT=-1e9;
+function handleTap(px,py){
+ if(!calMode)return;
+ const t=performance.now();if(t-lastTapT<350)return;lastTapT=t;
+ const r=cv.getBoundingClientRect(),x=(px-r.left)/r.width,y=(py-r.top)/r.height;
+ if(x<0||x>1||y<0||y>1)return;
+ pts.push([mirror?1-x:x,y]);
+ if(pts.length<calKind)say('OK '+pts.length+'/'+calKind+'. '+(calKind===3?M3:M4)[pts.length]);else finishCal();
+}
+const wr=$('wrap');
+wr.addEventListener('pointerdown',e=>handleTap(e.clientX,e.clientY),true);
+wr.addEventListener('touchend',e=>{const q=e.changedTouches&&e.changedTouches[0];if(q)handleTap(q.clientX,q.clientY)},{capture:true,passive:true});
+wr.addEventListener('click',e=>handleTap(e.clientX,e.clientY),true);
 
 function draw(hands,fh,sh){
+ if(guiding)computeGuide();const GH=guiding?guideHi:Hi;
  cx.clearRect(0,0,vw,vh);cx.lineWidth=Math.max(2,vw/400);
- if(Hi){
+ if(GH){
   cx.strokeStyle='#ff9f4388';
-  for(let s=0;s<6;s++){const a=map(Hi,0,s/5),b=map(Hi,1.3,s/5);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()}
-  for(let n=0;n<=5;n++){const u=(1-2**(-n/12))/P4,a=map(Hi,u,-.1),b=map(Hi,u,1.1);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()}
+  for(let s=0;s<6;s++){const a=map(GH,0,s/5),b=map(GH,1.3,s/5);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()}
+  for(let n=0;n<=5;n++){const u=(1-2**(-n/12))/P4,a=map(GH,u,-.1),b=map(GH,u,1.1);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()}
  }
- cal.forEach(p=>{cx.fillStyle='#4cd39a';cx.beginPath();cx.arc(p[0]*vw,p[1]*vh,vw/90,0,7);cx.fill()});
+ if(GH){const lab=(t,v)=>{const q=map(GH,1.05,v);cx.save();cx.translate(q[0],q[1]);if(mirror)cx.scale(-1,1);cx.fillStyle='#ff9f43';cx.font='bold '+(vw/34)+'px sans-serif';cx.textAlign='center';cx.fillText(t,0,-vw/60);cx.restore()};lab('thick E',0);lab('thin e',1)}
+ if(guiding&&guideCal.length===4){cx.strokeStyle='#4cd39a';cx.lineWidth=Math.max(3,vw/200);cx.beginPath();guideCal.forEach((q,i)=>i?cx.lineTo(q[0]*vw,q[1]*vh):cx.moveTo(q[0]*vw,q[1]*vh));cx.closePath();cx.stroke();cx.lineWidth=Math.max(2,vw/400)}
+ const pp=calMode?pts:guiding?[]:cal;
+ pp.forEach((p,i)=>{cx.fillStyle='#4cd39a';cx.beginPath();cx.arc(p[0]*vw,p[1]*vh,vw/60,0,7);cx.fill();cx.save();cx.translate(p[0]*vw,p[1]*vh);if(mirror)cx.scale(-1,1);cx.fillStyle='#000';cx.font='bold '+(vw/40)+'px sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(i+1,0,0);cx.restore()});
+ if(calMode&&calKind===3&&pts.length>=2){cx.strokeStyle='#4cd39a';cx.beginPath();cx.moveTo(pts[0][0]*vw,pts[0][1]*vh);cx.lineTo(pts[1][0]*vw,pts[1][1]*vh);cx.stroke()}
  hands.forEach((h,i)=>{cx.fillStyle=i===fh?'#ff9f43':i===sh?'#4cd39a':'#8b92a5';h.forEach(p=>{cx.beginPath();cx.arc(p[0],p[1],vw/180,0,7);cx.fill()})});
 }
 function fretboard(){
@@ -267,12 +341,12 @@ function fretboard(){
 }
 function frame(){
  requestAnimationFrame(frame);
- if(!running||!hl||V.readyState<2||V.currentTime===lastT)return;
+ if(!running||!hl||V.readyState<2||V.currentTime===lastT){if(stream&&vw&&(guiding||calMode)&&(!running||!hl))draw([],-1,-1);return}
  lastT=V.currentTime;const t=performance.now();let r;
  try{r=hl.detectForVideo(V,t)}catch(e){return}
  fcount++;
  const hs=(r.landmarks||[]).map(l=>l.map(p=>[p.x*vw,p.y*vh]));
- if(t-fps0>1000){$('dg').textContent=fcount+' fps · '+hs.length+' hand(s)';fcount=0;fps0=t}
+ if(t-fps0>1000){$('dg').textContent=fcount+' fps · '+hs.length+' hand(s)';fcount=0;fps0=t;try{bx.drawImage(V,0,0,16,16);const d=bx.getImageData(0,0,16,16).data;let m=0;for(let i=0;i<d.length;i+=4)m+=d[i]*.3+d[i+1]*.59+d[i+2]*.11;m/=256;const bad=m<55||m>235;$('lt').textContent='light: '+(m<55?'too dark':m>235?'too bright':'ok');$('lt').className='chip '+(bad?'bad':'ok')}catch(e){}}
  let fh=-1;
  if(H){let bc=0;hs.forEach((h,i)=>{let c=0;TIPS.forEach(k=>{const[u,v]=map(H,h[k][0],h[k][1]);if(u>0&&u<1.3&&v>-.3&&v<1.3)c++});if(c>bc){bc=c;fh=i}})}
  const sh=fh>=0?(hs.length>1?1-fh:-1):(hs.length?0:-1);
