@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Air Guitar Live</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1115;--p:#181b22;--p2:#232836;--tx:#e8eaf0;--mu:#8b92a5;--ac:#ff9f43;--ok:#4cd39a;--bad:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:980px;margin:0 auto;padding:10px;display:grid;gap:10px}
+.card{background:var(--p);border-radius:14px;padding:10px}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin:0 0 8px}
+#wrap{position:relative;margin:0 auto;width:min(100%,calc(58vh*var(--ar,1.7778)));aspect-ratio:var(--ar,16/9);background:#000;border-radius:10px;overflow:hidden}
+#wrap video,#wrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#msg{pointer-events:none;position:absolute;left:8px;right:8px;bottom:8px;background:#000b;border-radius:8px;padding:6px 10px;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+button,select,input{font:inherit;color:var(--tx);background:var(--p2);border:1px solid #2f3547;border-radius:10px;min-height:46px;padding:0 14px}
+button{cursor:pointer}button.pri{background:var(--ac);color:#1a1205;border-color:var(--ac);font-weight:700}
+button.on{border-color:var(--ok);color:var(--ok)}input[type=range]{padding:0;min-height:30px;width:100%}
+.chip{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--p2);color:var(--mu)}.chip.ok{color:var(--ok)}.chip.bad{color:var(--bad)}
+#cname{font-size:46px;font-weight:700;color:var(--ac);line-height:1}
+.top{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.pad button{font-weight:600;min-height:50px}.pad button.sel{background:var(--ac);color:#1a1205}
+.set{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.set label{display:grid;gap:4px;color:var(--mu);font-size:12px}
+small,li{color:var(--mu)}
+</style></head><body><main>
+<section class="card">
+ <div id="wrap"><video id="V" autoplay playsinline muted></video><canvas id="cv"></canvas><div id="msg">Press Start Playing. Camera needs HTTPS or localhost.</div></div>
+ <div class="row"><button id="go" class="pri">Start Playing</button>
+  <button id="back" class="on" style="flex:1">Back camera</button><button id="front" style="flex:1">Front camera</button></div>
+ <div class="row"><select id="cam" style="flex:1" aria-label="Other cameras"><option value="">Other cameras…</option></select></div>
+ <div class="row"><span class="chip" id="cs">camera off</span><span class="chip" id="hf">chord hand: –</span><span class="chip" id="hs">strum hand: –</span><span class="chip" id="au">audio: off</span><span class="chip" id="dg"></span><span class="chip" id="lt"></span></div>
+</section>
+
+<section class="card"><h2>1 · Teach your chords (once)</h2>
+ <div class="pad" id="tr"></div>
+ <div class="row"><button id="clr">Forget all</button><small id="trs">Not taught yet.</small></div>
+ <small>Press a chord, then form it on your guitar neck within 3 seconds and hold it, wiggling slightly, for 3 seconds. Show only your chord hand to the camera while teaching.</small>
+</section>
+
+<section class="card top"><div><div id="cname">—</div><small id="csub">detected chord</small></div>
+ <canvas id="fb" width="200" height="130" style="max-width:100%"></canvas></section>
+
+<section class="card"><h2>2 · Play</h2>
+ <select id="mode" style="width:100%"><option value="air">Air Guitar — chords + strums detected</option><option value="practice">Practice — no sound, check your shapes</option><option value="manual">Manual — you pick the chord, strum triggers</option></select>
+ <div class="pad" id="pad" style="margin-top:8px"></div>
+ <div class="row"><button id="dn" style="flex:1">Strum ↓</button><button id="up" style="flex:1">Strum ↑</button></div>
+ <small>Manual and Practice use the chord you pick above. The ↓/↑ buttons work even if tracking is poor.</small>
+</section>
+
+<section class="card"><h2>Settings</h2><div class="set">
+ <label>Strum sensitivity (higher = lighter strums)<input id="sens" type="range" min="1" max="10" value="8"></label>
+ <label>Strokes<select id="sm"><option value="both">Down + up</option><option value="down">Down only</option></select></label>
+ <label>Volume<input id="vol" type="range" min="0" max="1" step=".05" value=".8"></label>
+ <label>Strum strength<select id="str"><option value=".6">Light</option><option value=".85" selected>Normal</option><option value="1">Strong</option></select></label>
+ <label>Sound<select id="style"><option value="normal">Strum</option><option value="gentle">Gentle strum</option><option value="pick">Picked arpeggio</option></select></label>
+ <label>Strum direction<select id="flip"><option value="1">Normal</option><option value="-1">Flipped</option></select></label>
+</div></section>
+
+<section class="card"><h2>Setup guide</h2><ol>
+ <li>Prop the phone so both hands and the guitar neck are in view. Keep it bright and still. The “light” chip should say ok.</li>
+ <li>Press <b>Start Playing</b>, then teach Em, C, G and D one by one in section 1. Re-teach if you move the phone.</li>
+ <li>Hold a chord until its name shows, then strum with the other hand. A small wrist flick is enough.</li>
+</ol></section>
+</main>
+<script>
+const $=id=>document.getElementById(id),V=$('V'),cv=$('cv'),cx=cv.getContext('2d');
+const CH={Em:[0,2,2,0,0,0],C:[-1,3,2,0,1,0],G:[3,2,0,0,0,3],D:[-1,-1,0,2,3,2]};
+const NAMES=['Em','C','G','D'],OPEN=[40,45,50,55,59,64];
+
+/* ---------- audio: plucked-string model + acoustic body EQ (not recorded samples) ---------- */
+let ac,bus,cache={};
+function A(){
+ try{
+  if(!ac){ac=new(window.AudioContext||window.webkitAudioContext)();
+   const g=ac.createGain();g.gain.value=+$('vol').value;let n=g;
+   [[105,6,1.2],[210,3,1.5],[2400,2,.8]].forEach(([f,gn,q])=>{const b=ac.createBiquadFilter();b.type='peaking';b.frequency.value=f;b.gain.value=gn;b.Q.value=q;n.connect(b);n=b});
+   const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=6500;n.connect(lp);
+   const cp=ac.createDynamicsCompressor();lp.connect(cp);cp.connect(ac.destination);bus=g;
+   NAMES.forEach(c=>CH[c].forEach((f,i)=>{if(f>=0)buf(OPEN[i]+f)}));
+  }
+  if(ac.state!=='running')ac.resume();
+  $('au').textContent='audio: ready';$('au').className='chip ok';return ac;
+ }catch(e){$('au').textContent='audio failed';$('au').className='chip bad';return null}
+}
+$('vol').oninput=()=>{if(bus)bus.gain.value=+$('vol').value};
+function buf(m){
+ if(cache[m])return cache[m];
+ const f=440*2**((m-69)/12),sr=ac.sampleRate,N=Math.round(sr/f),len=sr*3|0,r=new Float32Array(N);let p=0;
+ for(let i=0;i<N;i++){p=p*.5+(Math.random()*2-1)*.5;r[i]=p}
+ const pp=Math.max(1,N*.14|0);for(let i=N-1;i>=pp;i--)r[i]-=r[i-pp]*.7;
+ const dec=.5**(1/(f*1.6)),o=new Float32Array(len);let k=0;
+ for(let i=0;i<len;i++){const a=r[k],b=r[(k+1)%N];o[i]=a;r[k]=(a+b)*.5*dec;k=(k+1)%N}
+ const fd=sr*.3|0;for(let i=0;i<fd;i++)o[len-1-i]*=i/fd;
+ const ab=ac.createBuffer(1,len,sr);ab.getChannelData(0).set(o);return cache[m]={ab,rate:(sr/N)/f};
+}
+let voices=[];
+function note(m,when,vel){
+ const{ab,rate}=buf(m),s=ac.createBufferSource(),g=ac.createGain();
+ s.buffer=ab;s.playbackRate.value=rate;g.gain.value=vel*.9;s.connect(g);g.connect(bus);s.start(when);
+ voices.push({s,g});if(voices.length>24)voices.shift();
+}
+function strum(name,dir,vel){
+ const c=CH[name];if(!c||!A())return;
+ const t0=ac.currentTime+.005,st=$('style').value;
+ voices.forEach(v=>{try{v.g.gain.setTargetAtTime(0,t0,.08)}catch(e){}});voices=[];
+ let ns=[];c.forEach((f,i)=>{if(f>=0)ns.push(OPEN[i]+f)});
+ if(dir<0)ns.reverse();
+ const gap=st==='pick'?.12:st==='gentle'?.05:.024,v=(st==='gentle'?.55:.85)*vel*(dir<0?.85:1);
+ ns.forEach((m,i)=>note(m,t0+i*gap+Math.random()*.004,v*(.92+Math.random()*.16)*(1-i*.03)));
+}
+
+/* ---------- chord recognition by hand shape (taught by example) ---------- */
+function feat(h){ // h: 21 landmarks [x,y,z]; result is independent of hand position, size and in-plane rotation
+ const w=h[0],m=h[9],dx=m[0]-w[0],dy=m[1]-w[1],s=Math.hypot(dx,dy)||1,c=dx/s,sn=dy/s,f=[];
+ for(let i=1;i<21;i++){const x=(h[i][0]-w[0])/s,y=(h[i][1]-w[1])/s;f.push(x*c+y*sn,-x*sn+y*c,.5*(h[i][2]-w[2])/s)}
+ return f;
+}
+const dist=(a,b)=>{let s=0;for(let i=0;i<a.length;i++){const d=a[i]-b[i];s+=d*d}return Math.sqrt(s/a.length)};
+function cdist(f,S){const d=S.map(x=>dist(f,x)).sort((a,b)=>a-b),k=Math.min(3,d.length);let m=0;for(let i=0;i<k;i++)m+=d[i];return m/k}
+let T={},TH={},fretLabel=null;
+function stats(){
+ TH={};
+ for(const n in T){const S=T[n];if(S.length<6)continue;
+  const intra=S.map((x,i)=>{const d=S.filter((_,j)=>j!==i).map(y=>dist(x,y)).sort((a,b)=>a-b);return(d[0]+d[1]+d[2])/3}).sort((a,b)=>a-b);
+  TH[n]=Math.max(.05,intra[Math.floor(intra.length*.9)]*2);}
+}
+function shape(f){
+ const r=[];for(const n in TH)r.push([n,cdist(f,T[n])]);
+ if(!r.length)return{c:'untrained'};
+ r.sort((a,b)=>a[1]-b[1]);const[n,d]=r[0];
+ if(d>TH[n])return{c:'unknown',d};
+ if(r.length>1&&d>r[1][1]*.85)return{c:'unknown',d};
+ return{c:n,d,conf:Math.max(0,Math.min(1,1-d/(TH[n]*1.5)))};
+}
+const votes=[];let stable=null,lastRes={c:'none'};
+function vote(c){
+ votes.push(c);if(votes.length>6)votes.shift();
+ const t={};votes.forEach(x=>t[x]=(t[x]||0)+1);
+ const[w,n]=Object.entries(t).sort((a,b)=>b[1]-a[1])[0];
+ stable=n>=4?w:null; // null = still detecting / transitioning
+}
+const saveT=()=>{try{localStorage.setItem('agT_'+facing,JSON.stringify({T,fretLabel}))}catch(e){}};
+function loadT(){T={};TH={};fretLabel=null;try{const d=JSON.parse(localStorage.getItem('agT_'+facing)||'null');if(d&&d.T){T=d.T;fretLabel=d.fretLabel||null}}catch(e){}stats();renderTrain()}
+function renderTrain(){
+ NAMES.forEach(n=>{const b=$('t'+n);if(!b)return;const ok=!!TH[n];b.textContent=ok?n+' ✓':'Teach '+n;b.classList.toggle('on',ok)});
+ const k=Object.keys(TH).length;$('trs').textContent=k===4?'All 4 chords taught.':k?k+' of 4 taught.':'Not taught yet.';
+}
+let training=null;
+function startTrain(n){
+ if(!running||!hl){say('Press Start Playing first so hand tracking is on.');return}
+ training={n,t0:performance.now(),S:[],L:[]};
+}
+function doTrain(hs,labels,t){
+ const e=t-training.t0,n=training.n;
+ if(e<3000){say('Get ready: form '+n+' with your chord hand… '+Math.ceil((3000-e)/1000));return}
+ if(e<6000){
+  if(hs.length===1){training.S.push(feat(hs[0]));training.L.push(labels[0])}
+  say('Hold '+n+' and wiggle your hand a little… '+Math.ceil((6000-e)/1000));return}
+ const S=training.S;training.n=null;
+ if(S.length<12){say('Only '+S.length+' good frames. Show ONLY your chord hand, in good light, and try again.');training=null;return}
+ const step=Math.ceil(S.length/40);
+ T[n]=S.filter((_,i)=>i%step===0).map(f=>f.map(v=>Math.round(v*1000)/1000));
+ const cnt={};training.L.forEach(l=>{if(l)cnt[l]=(cnt[l]||0)+1});
+ const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+ if(best)fretLabel=best[0];
+ stats();saveT();renderTrain();say('Learned '+n+' ✓ ('+S.length+' frames). Teach the next chord, or start playing.');training=null;
+}
+NAMES.forEach(n=>{const b=document.createElement('button');b.id='t'+n;b.textContent='Teach '+n;b.onclick=()=>{A();startTrain(n)};$('tr').appendChild(b)});
+$('clr').onclick=()=>{if(Object.keys(T).length&&!confirm('Forget all taught chords?'))return;T={};TH={};fretLabel=null;saveT();renderTrain();say('Training cleared.')};
+
+/* ---------- strum detection: zig-zag displacement on screen vertical or horizontal, scaled by hand size ---------- */
+let pv=null,lastSpeed=0,hist=[],lastDir=0,lastFire=-1e9,lockAx=-1,spanE=0;
+function strumStep(h,t){
+ if(pv===null){hist=[];pv=0;spanE=0}
+ let x=0,y=0;[8,12,16,20].forEach(k=>{x+=h[k][0];y+=h[k][1]});x/=4;y/=4;
+ const span=Math.max(20,Math.hypot(h[5][0]-h[17][0],h[5][1]-h[17][1]));spanE=spanE?spanE*.9+span*.1:span;
+ const L=hist[hist.length-1];if(L&&t-L.t<200){x=L.x*.4+x*.6;y=L.y*.4+y*.6}
+ hist.push({t,x,y});while(hist[0]&&t-hist[0].t>300)hist.shift();
+ if(hist.length<2)return;
+ const D=Math.max(.08,.95-.09*(+$('sens').value))*spanE;
+ for(const ax of [1,0]){
+  if(lockAx>=0&&t-lastFire<800&&ax!==lockAx)continue;
+  const k=ax?'y':'x',cur=hist[hist.length-1][k];
+  let lo=hist[0],hi=hist[0];for(const q of hist){if(q[k]<lo[k])lo=q;if(q[k]>hi[k])hi=q}
+  const up=cur-lo[k],dn=hi[k]-cur;let dir=0,from=null;
+  if(up>D&&up>=dn){dir=1;from=lo}else if(dn>D){dir=-1;from=hi}
+  if(!dir||t-lastFire<90)continue;
+  if(dir===lastDir&&t-lastFire<600)continue;
+  const speed=Math.abs(cur-from[k])/spanE/Math.max(.03,(t-from.t)/1000);
+  lastFire=t;lastDir=dir;lockAx=ax;lastSpeed=speed;hist=[hist[hist.length-1]];
+  doStrum(dir*(+$('flip').value),.45+.55*Math.min(1,Math.max(0,(speed-.8)/4)));return;
+ }
+}
+let target='Em',lastGood=null,lastGoodT=0;
+function doStrum(d,vel){
+ const m=$('mode').value;if(m==='practice')return;
+ if($('sm').value==='down'&&d<0)return;
+ let c=m==='manual'?target:stable;
+ if(m==='air'){if(CH[stable]){lastGood=stable;lastGoodT=performance.now()}else if(stable===null&&CH[lastGood]&&performance.now()-lastGoodT<1200)c=lastGood}
+ if(!CH[c]){$('dg').textContent='strum ignored: chord not clear';return}
+ strum(c,d,vel*(+$('str').value));
+ $('dg').textContent='strum '+(d>0?'↓':'↑')+' '+lastSpeed.toFixed(1);
+}
+$('dn').onclick=()=>{A();if($('mode').value!=='practice'&&CH[target])strum(target,1,+$('str').value)};
+$('up').onclick=()=>{A();if($('mode').value!=='practice'&&CH[target])strum(target,-1,+$('str').value)};
+const pad=$('pad');NAMES.forEach(n=>{const b=document.createElement('button');b.textContent=n;
+ b.onclick=()=>{target=n;[...pad.children].forEach(x=>x.classList.toggle('sel',x===b));A();if($('mode').value!=='practice')strum(n,1,.7);fretboard()};pad.appendChild(b);if(n==='Em')b.classList.add('sel')});
+
+/* ---------- camera + tracking ---------- */
+let wl=null;const bc=document.createElement('canvas');bc.width=bc.height=16;const bx=bc.getContext('2d',{willReadFrequently:true});
+let stream,hl,running=false,lastT=-1,fcount=0,fps0=performance.now(),facing='environment',mirror=false,vw=0,vh=0;
+const say=t=>$('msg').textContent=t;
+function camErr(e){const n=e&&e.name;
+ if(n==='NotAllowedError'||n==='SecurityError')return'Camera permission denied. In Chrome tap the lock icon in the address bar → Permissions → Camera → Allow, then try again.';
+ if(n==='NotFoundError'||n==='OverconstrainedError')return'No matching camera found. Try the other camera button or pick one from the list.';
+ if(n==='NotReadableError')return'The camera is busy (another app or tab is using it). Close that and try again.';
+ return'Camera error: '+(e&&(e.name+' '+e.message)||e)}
+async function listCams(){
+ try{const d=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput'),s=$('cam');
+  s.innerHTML='<option value="">Other cameras…</option>';d.forEach((x,i)=>{const o=document.createElement('option');o.value=x.deviceId;o.textContent=x.label||'Camera '+(i+1);s.appendChild(o)})}catch(e){}
+}
+async function openCam(){
+ if(stream)stream.getTracks().forEach(t=>t.stop());
+ const id=$('cam').value,base={width:{ideal:640},height:{ideal:480}};
+ const tries=id?[{deviceId:{exact:id}}]:[{facingMode:{exact:facing}},{facingMode:{ideal:facing}},{}];
+ let err=null;
+ for(const c of tries){try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...base,...c}});err=null;break}catch(e){err=e;if(e.name==='NotAllowedError'||e.name==='SecurityError'||e.name==='NotReadableError')break}}
+ if(err)throw err;
+ V.srcObject=stream;
+ await new Promise(r=>{if(V.readyState>=1)r();else V.onloadedmetadata=()=>r()});
+ try{await V.play()}catch(e){}
+ const st=stream.getVideoTracks()[0].getSettings();
+ if(st.facingMode==='user'||st.facingMode==='environment')facing=st.facingMode;
+ mirror=st.facingMode?st.facingMode==='user':facing==='user';
+ V.style.transform=cv.style.transform=mirror?'scaleX(-1)':'';
+ $('back').classList.toggle('on',facing==='environment');$('front').classList.toggle('on',facing==='user');
+ vw=V.videoWidth;vh=V.videoHeight;cv.width=vw;cv.height=vh;$('wrap').style.setProperty('--ar',vw/vh);
+ loadT();listCams();pv=null;votes.length=0;stable=null;
+ $('cs').textContent=(facing==='user'?'front':'back')+' camera '+vw+'×'+vh;$('cs').className='chip ok';
+}
+async function startCam(){
+ if(!window.isSecureContext||!navigator.mediaDevices){
+  say('Camera is blocked: this page is not on HTTPS or localhost (it was opened as '+location.protocol+'//). Manual ↓/↑ buttons still work.');
+  $('cs').textContent='camera blocked';$('cs').className='chip bad';return false}
+ try{await openCam();say(hl?'Camera on.':'Camera on. Press Start Playing to load hand tracking.');return true}
+ catch(e){say(camErr(e));$('cs').textContent='camera error';$('cs').className='chip bad';return false}
+}
+async function loadModel(){
+ say('Loading hand-tracking model (needs internet the first time)…');
+ const V0='0.10.14',mp=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V0+'/vision_bundle.mjs');
+ const fs=await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V0+'/wasm');
+ const mk=d=>mp.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:d},runningMode:'VIDEO',numHands:2,minHandDetectionConfidence:.4,minHandPresenceConfidence:.4,minTrackingConfidence:.4});
+ try{hl=await mk('GPU')}catch(e){hl=await mk('CPU')}
+}
+$('go').onclick=async()=>{
+ if(running){running=false;training=null;try{if(wl)wl.release()}catch(e){}wl=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;V.srcObject=null;cx.clearRect(0,0,cv.width,cv.height);
+  $('go').textContent='Start Playing';$('cs').textContent='camera off';$('cs').className='chip';say('Stopped.');return}
+ A();
+ if(!stream&&!(await startCam()))return;
+ if(!hl){try{await loadModel()}catch(e){say('Hand tracking failed to load ('+(e&&e.message||e)+'). The video is still live. Check your internet connection and press Start Playing again. Manual ↓/↑ buttons work meanwhile.');return}}
+ running=true;try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(l=>wl=l).catch(()=>{})}catch(e){}
+ $('go').textContent='Stop Playing';say(Object.keys(TH).length?'Playing. Hold a chord, then strum.':'Tracking on. Now teach your chords in section 1.');
+};
+$('back').onclick=()=>{A();facing='environment';$('cam').value='';startCam()};
+$('front').onclick=()=>{A();facing='user';$('cam').value='';startCam()};
+$('cam').onchange=()=>{if($('cam').value){A();startCam()}};
+
+/* ---------- drawing + main loop ---------- */
+function draw(hands,fh,sh){
+ cx.clearRect(0,0,vw,vh);
+ hands.forEach((h,i)=>{cx.fillStyle=i===fh?'#ff9f43':i===sh?'#4cd39a':'#8b92a5';h.forEach(p=>{cx.beginPath();cx.arc(p[0],p[1],vw/120,0,7);cx.fill()})});
+}
+function fretboard(){
+ const c=$('fb').getContext('2d');c.clearRect(0,0,200,130);c.strokeStyle='#555b70';c.lineWidth=1;
+ for(let s=0;s<6;s++){const x=30+s*28;c.beginPath();c.moveTo(x,22);c.lineTo(x,122);c.stroke()}
+ for(let f=0;f<=4;f++){const y=22+f*25;c.lineWidth=f?1:4;c.beginPath();c.moveTo(30,y);c.lineTo(170,y);c.stroke();c.lineWidth=1}
+ const t=CH[target];if(!t)return;c.fillStyle='#ff9f43';c.strokeStyle='#8b92a5';c.textAlign='center';c.font='12px sans-serif';
+ t.forEach((f,s)=>{const x=30+s*28;if(f>0){c.beginPath();c.arc(x,22+(f-.5)*25,8,0,7);c.fill()}else if(f===0){c.beginPath();c.arc(x,12,4,0,7);c.stroke()}else{c.fillStyle='#8b92a5';c.fillText('×',x,16);c.fillStyle='#ff9f43'}});
+}
+function frame(){
+ requestAnimationFrame(frame);
+ if(!running||!hl||V.readyState<2||V.currentTime===lastT)return;
+ lastT=V.currentTime;const t=performance.now();let r;
+ try{r=hl.detectForVideo(V,t)}catch(e){return}
+ fcount++;
+ const hs=(r.landmarks||[]).map(l=>l.map(p=>[p.x*vw,p.y*vh,p.z*vw]));
+ const hd=r.handedness||r.handednesses||[],labels=hs.map((_,i)=>hd[i]&&hd[i][0]?hd[i][0].categoryName:null);
+ if(t-fps0>1000){$('dg').textContent=fcount+' fps · '+hs.length+' hand(s)';fcount=0;fps0=t;
+  try{bx.drawImage(V,0,0,16,16);const d=bx.getImageData(0,0,16,16).data;let m=0;for(let i=0;i<d.length;i+=4)m+=d[i]*.3+d[i+1]*.59+d[i+2]*.11;m/=256;const bad=m<55||m>235;$('lt').textContent='light: '+(m<55?'too dark':m>235?'too bright':'ok');$('lt').className='chip '+(bad?'bad':'ok')}catch(e){}}
+ if(training){doTrain(hs,labels,t);draw(hs,-1,-1);return}
+ // which hand holds the chord: the one whose label matches the taught hand
+ const feats=hs.map(feat),trained=Object.keys(TH).length>0;
+ const dd=feats.map(f=>{let m=9;if(trained)for(const n in TH)m=Math.min(m,cdist(f,T[n]));return m});
+ let fh=-1;const cand=[];labels.forEach((l,i)=>{if(fretLabel&&l===fretLabel)cand.push(i)});
+ if(cand.length)fh=cand.reduce((a,b)=>dd[b]<dd[a]?b:a);
+ else if(!fretLabel&&trained&&hs.length)fh=dd.indexOf(Math.min(...dd));
+ const sh=hs.length>1?(fh>=0?1-fh:0):(fh>=0?-1:(hs.length?0:-1));
+ $('hf').textContent='chord hand: '+(fh>=0?'tracked':'not seen');$('hf').className='chip '+(fh>=0?'ok':'bad');
+ $('hs').textContent='strum hand: '+(sh>=0?'tracked':'not seen');$('hs').className='chip '+(sh>=0?'ok':'bad');
+ lastRes=fh>=0?shape(feats[fh]):{c:'none'};
+ vote(lastRes.c);
+ const mode=$('mode').value;
+ let show=stable==='none'?'—':stable==='unknown'?'Unknown shape':stable==='untrained'?'Teach chords first':stable===null?'Detecting…':stable;
+ if(mode==='manual')show=target;
+ $('cname').textContent=show;$('cname').style.fontSize=show.length>4?'28px':'46px';
+ $('csub').textContent=mode==='manual'?'manual chord':CH[stable]&&lastRes.c===stable?'detected chord · '+Math.round(100*lastRes.conf)+'%':mode==='practice'&&CH[stable]?(stable===target?'✓ matches '+target:'aim for '+target):'detected chord';
+ if(sh>=0&&mode!=='practice')strumStep(hs[sh],t);else pv=null;
+ draw(hs,fh,sh);
+}
+fretboard();renderTrain();requestAnimationFrame(frame);
+</script></body></html>
